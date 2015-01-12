@@ -19,16 +19,24 @@ namespace PTPGestures
             public IntPtr wParam;
         }
 
+        // Since variable sized arrays don't play well with marshalling, use GetRawHIDDataFromInput to get the byte array.
         [StructLayout(LayoutKind.Sequential)]
         public struct RawInputHID
         {
             public int Size;
             public int Count;
-            public IntPtr Data;  // For some reason data is being put in rather than addresses? Why?
-            public IntPtr Data2; // Probably the bytes are listed sequentially in memory rather than elsewhere.
-            public IntPtr Data3; // This hack will work for now.
+        }
+
+        public static byte[] GetRawHIDDataFromInput(RawInput input){
+            byte[] output = new byte[input.HID.Count * input.HID.Size];
+            IntPtr ptr = Marshal.AllocHGlobal(Marshal.SizeOf(input));
+            Marshal.StructureToPtr(input, ptr, false);
+            Marshal.Copy((ptr + Marshal.SizeOf(typeof(RawInputHeader)) + Marshal.SizeOf(typeof(RawInputHID))), output, 0, input.HID.Size * input.HID.Count);
+            Marshal.FreeHGlobal(ptr);
+            return output;
         }
  
+        //The MSDN page for GetRawInputBuffer suggests using a field offset of 16+8 for WOW64
         [StructLayout(LayoutKind.Explicit)]
         public struct RawInput
         {
@@ -41,22 +49,6 @@ namespace PTPGestures
             [FieldOffset(16)]
             public RawInputHID HID;
         }
-        /*
-        {
-            public RawInputHeader Header;
-            public Union Data;
-            [StructLayout(LayoutKind.Explicit)]
-            public struct Union
-            {
-                [FieldOffset(0)]
-                public RawMouse Mouse;
-                [FieldOffset(0)]
-                public RawKeyboard Keyboard;
-                [FieldOffset(0)]
-                public RawInputHID HID;
-            }
-        }
-         */
 
         [StructLayout(LayoutKind.Sequential)]
         public struct RawMouse
