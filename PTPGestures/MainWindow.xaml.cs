@@ -56,6 +56,7 @@ namespace PTPGestures
         private void OnClosing(object sender, CancelEventArgs e)
         {
             // Remove Hook
+            ptp.UnregisterDevice(new WindowInteropHelper(this).Handle);
             HwndSource.FromHwnd((new WindowInteropHelper(this)).Handle).RemoveHook(new HwndSourceHook(WndProc));
         }
     }

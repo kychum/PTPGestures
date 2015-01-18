@@ -10,6 +10,7 @@ namespace PTPGestures
     {
         abstract public void ReadData(IntPtr lParam);
         abstract public void RegisterDevice(IntPtr hwnd);
+        abstract public void UnregisterDevice(IntPtr hwnd);
 
         private GestureParser gestureParser;
         private RawInputAPI.DeviceInfo deviceInfo;

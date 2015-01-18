@@ -50,6 +50,10 @@ namespace PTPGestures
             public bool ButtonPressed;
         }
 
+        private int skip = 0, contactSkip = 0, contactsGot = 0, contactsAmt = 0;
+        private bool firstGet = true;
+        private GestureParser gp = new GestureParser();
+
         public override void ReadData(IntPtr lParam)
         {
             int size = Marshal.SizeOf(typeof(RawInputAPI.RawInput));
@@ -63,9 +67,48 @@ namespace PTPGestures
             {
                 byte[] data = RawInputAPI.GetRawHIDDataFromInput(inputData);
                 TouchData formatted = new TouchData(data);
-                Console.WriteLine(formatted.ToString());
-            }
 
+                if (firstGet)
+                {
+                    contactSkip = formatted.ContactCount;
+                    firstGet = false;
+                }
+                if (!formatted.Tip)
+                {
+                    // Something was lifted
+                    Console.WriteLine(formatted.ToString());
+                    gp.ProcessGesture(formatted.ContactID);
+                }
+                
+                //Console.WriteLine(formatted.ToString());
+                if (contactSkip >= 0)
+                {
+                    contactSkip--;
+                }
+                else
+                {
+                    skip--;
+                }
+                if (skip <= 0 && contactSkip <= 0)
+                {
+                    if (formatted.ContactCount != 0)
+                    {
+                        contactsAmt = formatted.ContactCount;
+                    }
+                    //Do something here!
+                    //Console.WriteLine(formatted.ToString());
+                    gp.AddPoint(formatted.ContactID, new System.Windows.Point(formatted.X, formatted.Y));
+
+                    //Got the last touch? Start skipping again.
+                    if (++contactsGot == contactsAmt)
+                    {
+                        contactsGot = 0;
+                        contactsAmt = 0;
+                        skip = 30; // Too many messages! Only parse one in every so much.
+                        firstGet = true;
+                    }
+                }
+            }
         }
 
         public override void RegisterDevice(IntPtr hwnd)
@@ -74,6 +117,20 @@ namespace PTPGestures
             rid[0].UsagePage = RawInputAPI.HIDUsagePage.Digitizer;
             rid[0].Usage = RawInputAPI.HIDUsage.Gamepad;
             rid[0].Flags = RawInputAPI.RawInputDeviceFlags.InputSink;
+            rid[0].WindowHandle = hwnd;
+            if (RawInputAPI.RegisterRawInputDevices(rid, (uint)rid.Length, (uint)Marshal.SizeOf(rid[0])) == false)
+            {
+                Console.Write("ERROR: Unable to register digitizer.\n");
+                Console.WriteLine((new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error())).Message);
+            }
+        }
+
+        public override void UnregisterDevice(IntPtr hwnd)
+        {
+            RawInputAPI.RawInputDevice[] rid = new RawInputAPI.RawInputDevice[1];
+            rid[0].UsagePage = RawInputAPI.HIDUsagePage.Digitizer;
+            rid[0].Usage = RawInputAPI.HIDUsage.Gamepad;
+            rid[0].Flags = RawInputAPI.RawInputDeviceFlags.InputSink | RawInputAPI.RawInputDeviceFlags.Remove;
             rid[0].WindowHandle = hwnd;
             if (RawInputAPI.RegisterRawInputDevices(rid, (uint)rid.Length, (uint)Marshal.SizeOf(rid[0])) == false)
             {
