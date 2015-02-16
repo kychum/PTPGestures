@@ -12,7 +12,8 @@ namespace PTPGestures
     {
         Dictionary<int, Point> LastPoint = new Dictionary<int, Point>();
         Dictionary<int, String> Movements = new Dictionary<int, String>();
-        private const double threshold = 50;
+        private const double threshold = 20;
+        private const int timeThreshold = 0x1388; // Expect ~ 5000 microseconds for a tap?
 
         public void AddPoint(int ContactID, System.Windows.Point pt)
         {
@@ -68,6 +69,7 @@ namespace PTPGestures
                 Console.WriteLine("Contact: " + ContactID + " - Gesture: " + Movements[ContactID]);
                 Movements[ContactID] = "";
                 LastPoint.Remove(ContactID);
+                //Console.WriteLine(LastPoint.ContainsKey(ContactID));
             }
         }
 

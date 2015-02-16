@@ -31,7 +31,7 @@ namespace PTPGestures
                 ButtonPressed = raw[9] > 0;
             }
 
-            public string ToString()
+            public override string ToString()
             {
                 string output = String.Format("ContactID: {0}; Tip: {1}; Confidence: {2}; X: {3:X4}; Y: {4:X4}; ScanTime: {5:X4}; ContactCount: {6}; ButtonPressed: {7}",
                     ContactID, Tip, Confidence, X, Y, ScanTime, ContactCount, ButtonPressed);
@@ -50,8 +50,8 @@ namespace PTPGestures
             public bool ButtonPressed;
         }
 
-        private int skip = 0, contactSkip = 0, contactsGot = 0, contactsAmt = 0;
-        private bool firstGet = true;
+        private int skipAmt = 25;
+        private int skip = 0;
         private GestureParser gp = new GestureParser();
 
         public override void ReadData(IntPtr lParam)
@@ -65,49 +65,37 @@ namespace PTPGestures
             }
             else
             {
-                byte[] data = RawInputAPI.GetRawHIDDataFromInput(inputData);
-                TouchData formatted = new TouchData(data);
-
-                if (firstGet)
-                {
-                    contactSkip = formatted.ContactCount;
-                    firstGet = false;
-                }
-                if (!formatted.Tip)
-                {
-                    // Something was lifted
-                    Console.WriteLine(formatted.ToString());
-                    gp.ProcessGesture(formatted.ContactID);
-                }
-                
-                //Console.WriteLine(formatted.ToString());
-                if (contactSkip >= 0)
-                {
-                    contactSkip--;
-                }
-                else
-                {
-                    skip--;
-                }
-                if (skip <= 0 && contactSkip <= 0)
-                {
-                    if (formatted.ContactCount != 0)
+                List<TouchData> dataList = new List<TouchData>();
+                dataList.Add(new TouchData(RawInputAPI.GetRawHIDDataFromInput(inputData)));
+                for(int ctr = 1; ctr < dataList[0].ContactCount; ctr++){
+                    insize = RawInputAPI.GetRawInputData(lParam, RawInputAPI.RawInputCommand.Input, out inputData, ref size, Marshal.SizeOf(typeof(RawInputAPI.RawInputHeader)));
+                    if (insize == -1)
                     {
-                        contactsAmt = formatted.ContactCount;
+                        Console.Write((new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error())).Message);
+                    
                     }
-                    //Do something here!
-                    //Console.WriteLine(formatted.ToString());
-                    gp.AddPoint(formatted.ContactID, new System.Windows.Point(formatted.X, formatted.Y));
-
-                    //Got the last touch? Start skipping again.
-                    if (++contactsGot == contactsAmt)
+                    TouchData data = new TouchData(RawInputAPI.GetRawHIDDataFromInput(inputData));
+                    if (dataList.Count(d => d.ContactID == data.ContactID) == 0)
                     {
-                        contactsGot = 0;
-                        contactsAmt = 0;
-                        skip = 30; // Too many messages! Only parse one in every so much.
-                        firstGet = true;
+                        dataList.Add(data);
                     }
                 }
+                if ((!dataList[0].Tip) || (skip <= 0))
+                {
+                    skip = skipAmt;
+                    foreach (TouchData d in dataList)
+                    {
+                        Console.WriteLine(d.ToString());
+                        gp.AddPoint(d.ContactID, new System.Windows.Point(d.X, d.Y));
+                        if (!d.Tip)
+                        {
+                            gp.ProcessGesture(d.ContactID);
+                            skip = 1;
+                        }
+                    }
+                }
+
+                skip--;
             }
         }
 
@@ -137,6 +125,11 @@ namespace PTPGestures
                 Console.Write("ERROR: Unable to register digitizer.\n");
                 Console.WriteLine((new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error())).Message);
             }
+        }
+
+        public void SetSkip(int amt)
+        {
+            skipAmt = amt;
         }
     }
 }
