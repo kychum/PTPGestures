@@ -23,7 +23,7 @@ namespace PTPGestures
     /// </summary>
     public partial class MainWindow : Window
     {
-        private Device ptp;
+        private Touchpad ptp;
         public MainWindow()
         {
             InitializeComponent();
@@ -31,7 +31,7 @@ namespace PTPGestures
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            ptp = new GenericDevice();
+            ptp = new Touchpad();
             ptp.RegisterDevice(new WindowInteropHelper(this).Handle);
             this.Visibility = Visibility.Hidden;
         }

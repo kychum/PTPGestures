@@ -7,22 +7,25 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Xml;
 using WindowsInput;
 
 namespace PTPGestures
 {
 	class GestureParser
 	{
-		Dictionary<int, Point> LastPoint = new Dictionary<int, Point>();
-		Dictionary<int, String> Movements = new Dictionary<int, String>();
-		Dictionary<String, String> Gestures = new Dictionary<String, String>();
 		List<Contact> contacts = new List<Contact>();
 		InputSimulator iSim = new InputSimulator();
-		private const double threshold = 20;
+		XmlDocument gestures = new XmlDocument();
 		private bool processed = false;
 		//private const int timeThreshold = 0x1388; // Expect ~ 5000 microseconds for a tap?
 
-		public void AddPoint(int ContactID, System.Windows.Point pt)
+		public GestureParser()
+		{
+			gestures.Load("settings.xml");
+		}
+
+		public void AddPoint(int ContactID, Point pt)
 		{
 			if(!contacts.Exists(c => c.id == ContactID))
 			{
@@ -30,53 +33,7 @@ namespace PTPGestures
 				contacts.Add(new Contact(ContactID, (int) pt.X, (int) pt.Y));
 			}
 			Contact contact = contacts.Find(c => c.id == ContactID);
-			if (!Movements.ContainsKey(ContactID))
-			{
-				Movements.Add(ContactID, "");
-			}
-			if (LastPoint.ContainsKey(ContactID))
-			{
-				Vector movement = pt - LastPoint[ContactID];
-				if (movement.Length >= threshold)
-				{
-					//double angle = Vector.AngleBetween(movement, LastPoint[ContactID] - new Point(LastPoint[ContactID].X+10,LastPoint[ContactID].Y));
-					double angle = (Math.Atan2(pt.Y - LastPoint[ContactID].Y, pt.X - LastPoint[ContactID].X)*(180.0/Math.PI))+180;
-					//Console.WriteLine("[DEBUG] Angle: " + angle);
-					if (angle > 60 && angle < 120)
-					{
-						AddMovement(ContactID, "U");
-						contact.addMovement("U");
-					}
-					else if (angle < 30 || angle > 330)
-					{
-						AddMovement(ContactID, "L");
-						contact.addMovement("L");
-					}
-					else if (angle > 150 && angle < 210)
-					{
-						AddMovement(ContactID, "R");
-						contact.addMovement("R");
-					}
-					else if (angle > 240 && angle < 300)
-					{
-						AddMovement(ContactID, "D");
-						contact.addMovement("D");
-					}
-				}
-			}
-			else
-			{
-				LastPoint.Add(ContactID, pt);
-			}
-			LastPoint[ContactID] = pt;
-		}
-
-		private void AddMovement(int id, String direction)
-		{
-			if (!Movements[id].EndsWith(direction))
-			{
-				Movements[id] += direction;
-			}
+			contact.addPoint(pt);
 		}
 
 		public void ProcessGesture()
@@ -92,40 +49,29 @@ namespace PTPGestures
 				}
 				gesture = gesture.TrimEnd(',');
 
-				Console.Write(gesture);
-				if (gesture.Equals("EL"))
+				Console.WriteLine(gesture);
+
+				XmlNode action = gestures.SelectSingleNode("//gesture[trigger='" + gesture + "']/action");
+				if (action != null)
 				{
-					Console.WriteLine("Sending Win+A");
-					iSim.Keyboard.ModifiedKeyStroke(WindowsInput.Native.VirtualKeyCode.LWIN, WindowsInput.Native.VirtualKeyCode.VK_A);
+					Console.WriteLine(action.Attributes["type"].Value);
 				}
-				if (gesture.Equals("ER"))
-				{
-					iSim.Keyboard.ModifiedKeyStroke(WindowsInput.Native.VirtualKeyCode.LWIN, WindowsInput.Native.VirtualKeyCode.TAB);
-				}
-				if (gesture.Equals("T,T,T"))
-				{
-					SimulateMiddleClick();
-				}
-				Console.WriteLine(" : Test");
 				processed = true;
 			}
 		}
 
+		// Seems inefficient. This way makes it so that contacts are tracked until they leave the touchpad
 		public void ProcessGesture(int ContactID)
 		{
-			if (Movements.ContainsKey(ContactID))
+			if (contacts.Exists(c => c.id == ContactID))
 			{
 				ProcessGesture();
-				//Console.WriteLine("Contact: " + ContactID + " - Gesture: " + Movements[ContactID]);
-				Movements[ContactID] = "";
-				LastPoint.Remove(ContactID);
 				contacts.Remove(contacts.Find(c => c.id == ContactID));
-				//Console.WriteLine(LastPoint.ContainsKey(ContactID));
 			}
 		}
 
-		
-		// Will use to emit mouse events if needed.
+
+		// Use to simulate mouse events not provided in InputSimulator.
 		[DllImport("user32.dll")]
 		public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
 
@@ -139,7 +85,7 @@ namespace PTPGestures
 			MIDDLEUP = 0x0040
 		}
 
-		// InputSimulator lacks a middle click simulator, so implement our own.
+		// InputSimulator lacks a middle click, so implement our own.
 		private void SimulateMiddleClick()
 		{
 			mouse_event((int)MouseEvent.MIDDLEDOWN | (int)MouseEvent.MIDDLEUP, 0, 0, 0, 0);

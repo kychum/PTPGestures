@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+	<gesturelist>
+		<gesture trigger="EL">
+			<name>Right Edge Swipe</name>
+			<trigger>EL</trigger>
+			<action type="keyboard">#A</action>
+		</gesture>
+		<gesture trigger="T,T,T">
+			<name>Three Finger Tap</name>
+			<trigger>T,T,T</trigger>
+			<action type="mouse">MButton</action>
+		</gesture>
+		<gesture trigger="ER">
+			<name>Left Edge Swipe</name>
+			<trigger>ER</trigger>
+			<action type="keyboard">#Tab</action>
+	</gesturelist>
+</settings>

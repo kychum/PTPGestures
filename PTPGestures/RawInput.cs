@@ -195,6 +195,8 @@ namespace PTPGestures
 
 		[DllImport("user32.dll",SetLastError=true)]
 		public static extern int GetRawInputData(IntPtr hRawInput, RawInputCommand uiCommand, out RawInput pData, ref int pcbSize, int cbSizeHeader);
+		[DllImport("user32.dll",SetLastError=true)]
+		public static extern int GetRawInputData(IntPtr hRawInput, RawInputCommand uiCommand, out RawInputHeader pData, ref int pcbSize, int cbSizeHeader);
 		[DllImport("user32.dll")]
 		public static extern uint GetRawInputDeviceInfo(IntPtr hDevice, uint uiCommand, IntPtr pData, ref uint pcbSize);
 		public enum RawInputDeviceType : uint

@@ -13,7 +13,7 @@ using System.Runtime.InteropServices;
 
 namespace PTPGestures
 {
-	class GenericDevice : Device
+	class Touchpad
 	{
 		private struct TouchData
 		{
@@ -53,15 +53,21 @@ namespace PTPGestures
 		private int skipAmt = 25;
 		private int skip = 0;
 		private GestureParser gp = new GestureParser();
+		//private RawInputAPI.DeviceInfo deviceInfo; // If needed, this is the decl
 
-		public override void ReadData(IntPtr lParam)
+		public void ReadData(IntPtr lParam)
 		{
 			int size = Marshal.SizeOf(typeof(RawInputAPI.RawInput));
+			
 			RawInputAPI.RawInput inputData = new RawInputAPI.RawInput();
 			int insize = RawInputAPI.GetRawInputData(lParam, RawInputAPI.RawInputCommand.Input, out inputData, ref size, Marshal.SizeOf(typeof(RawInputAPI.RawInputHeader)));
 			if (insize == -1)
 			{
-				Console.Write("L64: ");
+				// This block seems to execute often: data area size too small. Why? (Seems to work fine anyway)
+				// Happens more often with 2+ contacts, but not always.
+				// Rmk: Matching the size with what's in the header leads to all sorts of exceptions.
+				//		In particular, AccessViolationException --- so memory is getting corrupted whenever we get the whole thing.
+				Console.Write("[Touchpad] Error getting initial RawInput: ");
 				Console.WriteLine((new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error())).Message);
 			}
 			else
@@ -72,7 +78,7 @@ namespace PTPGestures
 					insize = RawInputAPI.GetRawInputData(lParam, RawInputAPI.RawInputCommand.Input, out inputData, ref size, Marshal.SizeOf(typeof(RawInputAPI.RawInputHeader)));
 					if (insize == -1)
 					{
-						Console.Write("L74: ");
+						Console.Write("[Touchpad] Error retrieving RawInput");
 						Console.WriteLine((new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error())).Message);
 					}
 					TouchData data = new TouchData(RawInputAPI.GetRawHIDDataFromInput(inputData));
@@ -100,7 +106,7 @@ namespace PTPGestures
 			}
 		}
 
-		public override void RegisterDevice(IntPtr hwnd)
+		public void RegisterDevice(IntPtr hwnd)
 		{
 			RawInputAPI.RawInputDevice[] rid = new RawInputAPI.RawInputDevice[1];
 			rid[0].UsagePage = RawInputAPI.HIDUsagePage.Digitizer;
@@ -114,7 +120,7 @@ namespace PTPGestures
 			}
 		}
 
-		public override void UnregisterDevice(IntPtr hwnd)
+		public void UnregisterDevice(IntPtr hwnd)
 		{
 			RawInputAPI.RawInputDevice[] rid = new RawInputAPI.RawInputDevice[1];
 			rid[0].UsagePage = RawInputAPI.HIDUsagePage.Digitizer;

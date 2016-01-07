@@ -61,8 +61,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Contact.cs" />
-    <Compile Include="Device.cs" />
-    <Compile Include="GenericDevice.cs" />
+    <Compile Include="Touchpad.cs" />
     <Compile Include="GestureParser.cs" />
     <Compile Include="RawInput.cs" />
     <Page Include="MainWindow.xaml">
