@@ -12,7 +12,7 @@
 					</Grid.ColumnDefinitions>
 					<DockPanel Grid.Column="0" Margin="5">
 						<DockPanel DockPanel.Dock="Top">
-							<Button Content="New Gesture" Padding="5,2" Margin="0,0,5,0"/>
+							<Button x:Name="NewGestureButton" Content="New Gesture" Padding="5,2" Margin="0,0,5,0" Click="CreateNewGesture"/>
 							<TextBox Height="24" VerticalContentAlignment="Center"/>
 						</DockPanel>
 						<ListBox DockPanel.Dock="Bottom" Margin="0,5,0,0" x:Name="GestureList" SelectionChanged="GestureList_SelectionChanged">
@@ -73,16 +73,19 @@
 									</GroupBox>
 								</StackPanel>
 							</GroupBox>
-							<Button Content="Delete Gesture" Grid.Column="0" Grid.Row="3" VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="5"/>
-							<DockPanel Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-								<Button Content="Save Changes" Padding="5"/>
-							</DockPanel>
+							<Button x:Name="DeleteGestureButton" Content="Delete Gesture" Grid.Column="0" Grid.Row="3" VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="5" Click="DeleteGesture"/>
+							<Button x:Name="SaveGestureButton"  Content="Save Changes" Padding="5" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Click="SaveGesture"/>
 						</Grid>
 					</GroupBox>
 				</Grid>
 			</TabItem>
 			<TabItem Header="Settings">
 				<Grid Background="#FFE5E5E5"/>
+			</TabItem>
+			<TabItem Header="About">
+				<Grid Background="#FFE5E5E5">
+					<TextBlock Text="PTPGestures version 0.1" />
+				</Grid>
 			</TabItem>
 			<TabItem Header="Debug">
 				<StackPanel Background="#FFE5E5E5">

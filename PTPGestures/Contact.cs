@@ -14,6 +14,7 @@ namespace PTPGestures
 		public int startY;
 		public DateTime startTime;
 		private const double threshold = 20;
+		private const int tapTicks = 7500000;
 		private string gesture;
 		private Point lastPoint;
 
@@ -72,7 +73,7 @@ namespace PTPGestures
 		{
 			if (gesture.Equals("")) // 10million ticks/sec
 			{
-				if ((DateTime.Now - startTime).Ticks < 7500000){
+				if ((DateTime.Now - startTime).Ticks < tapTicks){
 					gesture = "T";
 				}
 				else{
