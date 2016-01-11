@@ -55,6 +55,21 @@ namespace PTPGestures
 				if (action != null)
 				{
 					Console.WriteLine(action.Attributes["type"].Value);
+					Console.WriteLine(action.InnerText);
+					switch (action.Attributes["type"].Value)
+					{
+						case "keyboard":
+							sendKeyboardAction(action.InnerText);
+							break;
+						case "mouse":
+							sendMouseAction(action.InnerText);
+							break;
+						case "exec":
+							sendExecAction(action.InnerText);
+							break;
+						default:
+							break;
+					}
 				}
 				processed = true;
 			}
@@ -68,6 +83,113 @@ namespace PTPGestures
 				ProcessGesture();
 				contacts.Remove(contacts.Find(c => c.id == ContactID));
 			}
+		}
+
+		public void sendKeyboardAction(string action)
+		{
+			var keys = new Stack<WindowsInput.Native.VirtualKeyCode>();
+			for (int keyPos = 0; keyPos < action.Length; keyPos++)
+			{
+				switch (action[keyPos])
+				{
+					case '+':
+						iSim.Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.LSHIFT);
+						keys.Push(WindowsInput.Native.VirtualKeyCode.LSHIFT);
+						break;
+					case '^':
+						iSim.Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.LCONTROL);
+						keys.Push(WindowsInput.Native.VirtualKeyCode.LCONTROL);
+						break;
+					case '#':
+						iSim.Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.LWIN);
+						keys.Push(WindowsInput.Native.VirtualKeyCode.LWIN);
+						break;
+					case '!':
+						// InputSimulator lacks ALT?
+						break;
+					case '{':
+						int endpoint = action.Substring(keyPos).IndexOf('}');
+						string keyName = action.Substring(keyPos + 1, action.Length - (endpoint - keyPos));
+						keyPos = endpoint + 1;
+						WindowsInput.Native.VirtualKeyCode key;
+						if (System.Enum.TryParse<WindowsInput.Native.VirtualKeyCode>(keyName, true, out key))
+						{
+							iSim.Keyboard.KeyDown(key);
+							keys.Push(key);
+						}
+						break;
+					default:
+						char upperKey = System.Char.ToUpper(action[keyPos]);
+						if (System.Char.IsLetterOrDigit(upperKey))
+						{
+							iSim.Keyboard.KeyDown((WindowsInput.Native.VirtualKeyCode)((int)upperKey));
+							keys.Push((WindowsInput.Native.VirtualKeyCode)((int)upperKey));
+						}
+						break;
+				}
+			}
+
+			foreach(var key in keys){
+				iSim.Keyboard.KeyUp(key);
+				Console.WriteLine(System.Enum.GetName(typeof(WindowsInput.Native.VirtualKeyCode),key));
+			}
+		}
+
+		public void sendMouseAction(string action)
+		{
+			//Search for modifier keys, then look for mouse buttons
+			int mouseStart = 0;
+			var modifiers = new Stack<WindowsInput.Native.VirtualKeyCode>();
+			for (int keyPos = 0; keyPos < 3; keyPos++)
+			{
+				bool done = false;
+				switch (action[keyPos])
+				{
+					case '+':
+						iSim.Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.LSHIFT);
+						modifiers.Push(WindowsInput.Native.VirtualKeyCode.LSHIFT);
+						break;
+					case '^':
+						iSim.Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.LCONTROL);
+						modifiers.Push(WindowsInput.Native.VirtualKeyCode.LCONTROL);
+						break;
+					case '#':
+						iSim.Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.LWIN);
+						modifiers.Push(WindowsInput.Native.VirtualKeyCode.LWIN);
+						break;
+					default:
+						mouseStart = keyPos;
+						done = true;
+						break;
+				}
+				if (done)
+				{
+					break;
+				}
+			}
+			switch (action.Substring(mouseStart))
+			{
+				case "LButton":
+					iSim.Mouse.LeftButtonClick();
+					break;
+				case "RButton":
+					iSim.Mouse.RightButtonClick();
+					break;
+				case "MButton":
+					SimulateMiddleClick();
+					break;
+				default:
+					break;
+			}
+
+			foreach(var key in modifiers){
+				iSim.Keyboard.KeyUp(key);
+			}
+		}
+
+		public void sendExecAction(string action)
+		{
+
 		}
 
 
