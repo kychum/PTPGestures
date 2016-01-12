@@ -16,11 +16,16 @@ namespace PTPGestures
 	{
 		List<Contact> contacts = new List<Contact>();
 		InputSimulator iSim = new InputSimulator();
-		XmlDocument gestures = new XmlDocument();
+		static XmlDocument gestures = new XmlDocument();
 		private bool processed = false;
 		//private const int timeThreshold = 0x1388; // Expect ~ 5000 microseconds for a tap?
 
 		public GestureParser()
+		{
+			UpdateSettings();
+		}
+
+		public static void UpdateSettings()
 		{
 			gestures.Load("settings.xml");
 		}
@@ -106,6 +111,8 @@ namespace PTPGestures
 						break;
 					case '!':
 						// InputSimulator lacks ALT?
+						iSim.Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.MENU);
+						keys.Push(WindowsInput.Native.VirtualKeyCode.MENU);
 						break;
 					case '{':
 						int endpoint = action.Substring(keyPos).IndexOf('}');

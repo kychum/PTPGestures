@@ -26,6 +26,7 @@ namespace PTPGestures
     {
         private Touchpad ptp;
 		bool settingsChanged = false;
+		string version = "0.2";
 		XmlDocument Settings = new XmlDocument();
 		string initialSettings = "";
 
@@ -67,12 +68,6 @@ namespace PTPGestures
 
         private void OnClosing(object sender, CancelEventArgs e)
         {
-			if (settingsChanged)
-			{
-				if(!initialSettings.Equals(Settings.InnerXml))
-					Settings.Save("settings2.xml");
-			}
-
             // Remove Hook
             ptp.UnregisterDevice(new WindowInteropHelper(this).Handle);
             HwndSource.FromHwnd((new WindowInteropHelper(this)).Handle).RemoveHook(new HwndSourceHook(WndProc));
@@ -241,7 +236,7 @@ namespace PTPGestures
 
 			GestureList.SelectedItem = GestureList.Items.GetItemAt(GestureList.Items.Count - 1);
 
-			settingsChanged = true;
+			WriteSettings();
 		}
 
 		private void DeleteGesture(object sender, RoutedEventArgs e)
@@ -251,7 +246,7 @@ namespace PTPGestures
 			{
 				Settings["settings"]["gesturelist"].RemoveChild(toDelete);
 				GestureList.Items.Remove(GestureList.SelectedItem);
-				settingsChanged = true;
+				WriteSettings();
 			}
 		}
 
@@ -261,10 +256,9 @@ namespace PTPGestures
 			XmlNode modifiedNode = Settings.SelectSingleNode("//gesture[name='" + oldName + "']");
 			if (modifiedNode != null)
 			{
-				XmlNode newNode = Settings.CreateDocumentFragment();
 				string gestureXml = "";
 				// Individually setting the child nodes' InnerText/Value doesn't work.
-				gestureXml = "<gesture>";
+				gestureXml = "";
 				gestureXml += "<name>" + GestureName.Text + "</name>";
 				Console.WriteLine(gestureXml + GestureName.Text);
 				gestureXml += "<trigger>" + GestureTrigger.Text + "</trigger>";
@@ -319,18 +313,27 @@ namespace PTPGestures
 					actionXml += "\"></action>";
 				}
 
-				gestureXml += actionXml + "</gesture>";
+				gestureXml += actionXml;
 				Console.WriteLine(gestureXml);
-				newNode.InnerXml = gestureXml;
-				Console.WriteLine(newNode.InnerXml);
-				Settings["settings"]["gesturelist"].ReplaceChild(newNode, modifiedNode);
-				settingsChanged = true;
+				modifiedNode.InnerXml = gestureXml;
 				int index = GestureList.SelectedIndex;
 				GestureList.Items[index] = GestureName.Text;
 				GestureList.SelectedIndex = index;
+
+				WriteSettings();
 				
 				//Settings["settings"]["gesturelist"].ReplaceChild(Settings.SelectSingleNode("//gesture[name='" + oldName + "']"), modifiedNode);
 			}
+		}
+
+		private void WriteSettings()
+		{
+			if (!initialSettings.Equals(Settings.InnerXml))
+			{
+				Settings.Save("settings.xml");
+				initialSettings = Settings.InnerXml;
+			}
+			GestureParser.UpdateSettings();
 		}
     }
 }
