@@ -1,7 +1,7 @@
 ﻿<Window x:Class="PTPGestures.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="MainWindow" SizeToContent="WidthAndHeight" Loaded="OnLoaded" SourceInitialized="OnSourceInitialized" Closing="OnClosing" ResizeMode="NoResize" Width="1051" Height="571">
+        Title="PTPGestures" SizeToContent="WidthAndHeight" Loaded="OnLoaded" SourceInitialized="OnSourceInitialized" Closing="OnClosing" ResizeMode="NoResize" Width="1051" Height="571">
 	<Grid Height="512" Width="1024">
 		<TabControl>
 			<TabItem Header="Gestures">
@@ -18,7 +18,7 @@
 						<ListBox DockPanel.Dock="Bottom" Margin="0,5,0,0" x:Name="GestureList" SelectionChanged="GestureList_SelectionChanged">
 						</ListBox>
 					</DockPanel>
-					<GroupBox Header="Gesture Settings" Grid.Column="1">
+					<GroupBox x:Name="GestureSettingsBox" Header="Gesture Settings" Grid.Column="1" IsEnabled="False">
 						<Grid>
 							<Grid.ColumnDefinitions>
 								<ColumnDefinition Width="Auto" />
@@ -31,36 +31,36 @@
 								<RowDefinition Height="*" />
 							</Grid.RowDefinitions>
 							<Label Content="Name:" Grid.Column="0" Grid.Row="0"/>
-							<TextBox x:Name="GestureName"  Grid.Column="1" Grid.Row="0" VerticalContentAlignment="Center" Margin="0,2"/>
+							<TextBox x:Name="GestureName"  Grid.Column="1" Grid.Row="0" VerticalContentAlignment="Center" Margin="0,2" TextChanged="GestureChanged"/>
 							<Label Content="Gesture:"  Grid.Column="0" Grid.Row="1"/>
-							<TextBox x:Name="GestureTrigger" Grid.Column="1" Grid.Row="1" VerticalContentAlignment="Center" Margin="0,2"/>
+							<TextBox x:Name="GestureTrigger" Grid.Column="1" Grid.Row="1" VerticalContentAlignment="Center" Margin="0,2" TextChanged="GestureChanged"/>
 							<GroupBox Header="Action" Grid.Row="2" Grid.ColumnSpan="2" Padding="5">
 								<StackPanel>
 									<RadioButton x:Name="KeyboardRadio" GroupName="actionType" Content="Keyboard" Grid.Column="0" Unchecked="ActionRadio_Unchecked" Checked="ActionRadio_Checked"/>
 									<GroupBox x:Name="KeyboardActionGroup" Padding="20,5" BorderThickness="0" IsEnabled="False">
 										<DockPanel>
 											<StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-											<CheckBox x:Name="KeyboardShift" Content="Shift" Margin="5,0" VerticalAlignment="Center"/>
-											<CheckBox x:Name="KeyboardCtrl" Content="Control" Margin="5,0" VerticalAlignment="Center"/>
-											<CheckBox x:Name="KeyboardAlt" Content="Alt" Margin="5,0" VerticalAlignment="Center"/>
-											<CheckBox x:Name="KeyboardWin" Content="Windows" Margin="5,0" VerticalAlignment="Center"/>
+												<CheckBox x:Name="KeyboardShift" Content="Shift" Margin="5,0" VerticalAlignment="Center" Checked="GestureChanged" Unchecked="GestureChanged"/>
+												<CheckBox x:Name="KeyboardCtrl" Content="Control" Margin="5,0" VerticalAlignment="Center" Checked="GestureChanged" Unchecked="GestureChanged"/>
+												<CheckBox x:Name="KeyboardAlt" Content="Alt" Margin="5,0" VerticalAlignment="Center" Checked="GestureChanged" Unchecked="GestureChanged"/>
+												<CheckBox x:Name="KeyboardWin" Content="Windows" Margin="5,0" VerticalAlignment="Center" Checked="GestureChanged" Unchecked="GestureChanged"/>
 											</StackPanel>
-											<TextBox x:Name="KeyboardAction" DockPanel.Dock="Top" Height="26" Margin="0,2" VerticalContentAlignment="Center"/>
+											<TextBox x:Name="KeyboardAction" DockPanel.Dock="Top" Height="26" Margin="0,2" VerticalContentAlignment="Center" TextChanged="GestureChanged"/>
 										</DockPanel>
 									</GroupBox>
 									<RadioButton x:Name="MouseRadio" GroupName="actionType" Content="Mouse" Grid.Column="1" Unchecked="ActionRadio_Unchecked" Checked="ActionRadio_Checked"/>
 									<GroupBox x:Name="MouseActionGroup" BorderThickness="0" IsEnabled="False" Padding="20,5">
 										<DockPanel>
 											<StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,2">
-												<RadioButton x:Name="MouseLeftRadio" GroupName="MouseButton" Content="Left Click" Margin="5,0" />
-												<RadioButton x:Name="MouseRightRadio" GroupName="MouseButton" Content="Right Click" Margin="5,0" />
-												<RadioButton x:Name="MouseMiddleRadio" GroupName="MouseButton" Content="Middle Click" Margin="5,0" />
+												<RadioButton x:Name="MouseLeftRadio" GroupName="MouseButton" Content="Left Click" Margin="5,0" Checked="GestureChanged" />
+												<RadioButton x:Name="MouseRightRadio" GroupName="MouseButton" Content="Right Click" Margin="5,0" Checked="GestureChanged" />
+												<RadioButton x:Name="MouseMiddleRadio" GroupName="MouseButton" Content="Middle Click" Margin="5,0" Checked="GestureChanged" />
 											</StackPanel>
 											<StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,2">
-												<CheckBox x:Name="MouseShift" Content="Shift" Margin="5,0" VerticalAlignment="Center"/>
-												<CheckBox x:Name="MouseCtrl" Content="Control" Margin="5,0" VerticalAlignment="Center"/>
-												<CheckBox x:Name="MouseAlt" Content="Alt" Margin="5,0" VerticalAlignment="Center"/>
-												<CheckBox x:Name="MouseWin" Content="Windows" Margin="5,0" VerticalAlignment="Center"/>
+												<CheckBox x:Name="MouseShift" Content="Shift" Margin="5,0" VerticalAlignment="Center" Checked="GestureChanged" Unchecked="GestureChanged"/>
+												<CheckBox x:Name="MouseCtrl" Content="Control" Margin="5,0" VerticalAlignment="Center" Checked="GestureChanged" Unchecked="GestureChanged"/>
+												<CheckBox x:Name="MouseAlt" Content="Alt" Margin="5,0" VerticalAlignment="Center" Checked="GestureChanged" Unchecked="GestureChanged"/>
+												<CheckBox x:Name="MouseWin" Content="Windows" Margin="5,0" VerticalAlignment="Center" Checked="GestureChanged" Unchecked="GestureChanged"/>
 											</StackPanel>
 										</DockPanel>
 									</GroupBox>
@@ -68,13 +68,13 @@
 									<GroupBox x:Name="ProgramActionGroup" Padding="20,5" BorderThickness="0" IsEnabled="False">
 										<DockPanel>
 											<Button x:Name="BrowseButton" Content="Browse..." DockPanel.Dock="Right" Padding="3,0" VerticalAlignment="Center" Height="26"/>
-											<TextBox x:Name="ProgramTextbox" DockPanel.Dock="Left" Margin="5,2" Height="26" VerticalContentAlignment="Center"/>
+											<TextBox x:Name="ProgramTextbox" DockPanel.Dock="Left" Margin="5,2" Height="26" VerticalContentAlignment="Center" TextChanged="GestureChanged"/>
 										</DockPanel>
 									</GroupBox>
 								</StackPanel>
 							</GroupBox>
-							<Button x:Name="DeleteGestureButton" Content="Delete Gesture" Grid.Column="0" Grid.Row="3" VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="5" Click="DeleteGesture"/>
-							<Button x:Name="SaveGestureButton"  Content="Save Changes" Padding="5" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Click="SaveGesture"/>
+							<Button x:Name="DeleteGestureButton" Content="Delete Gesture" Grid.Column="0" Grid.Row="3" VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="5" Click="DeleteGesture" IsEnabled="False"/>
+							<Button x:Name="SaveGestureButton"  Content="Save Changes" Padding="5" Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Click="SaveGesture" IsEnabled="False"/>
 						</Grid>
 					</GroupBox>
 				</Grid>
@@ -84,9 +84,10 @@
 			</TabItem>
 			<TabItem Header="About">
 				<Grid Background="#FFE5E5E5">
-					<TextBlock Text="PTPGestures version 0.1" />
+					<TextBlock x:Name="AboutText" />
 				</Grid>
 			</TabItem>
+			<!--
 			<TabItem Header="Debug">
 				<StackPanel Background="#FFE5E5E5">
 					<GroupBox Header="Test">
@@ -100,6 +101,7 @@
 					</GroupBox>
 				</StackPanel>
 			</TabItem>
+			-->
 		</TabControl>
 	</Grid>
 </Window>

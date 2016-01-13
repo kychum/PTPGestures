@@ -25,10 +25,11 @@ namespace PTPGestures
     public partial class MainWindow : Window
     {
         private Touchpad ptp;
-		bool settingsChanged = false;
-		string version = "0.2";
-		XmlDocument Settings = new XmlDocument();
-		string initialSettings = "";
+		private bool settingsChanged = false;
+		private bool programmaticChanges = false;
+		private string version = "0.3";
+		private XmlDocument Settings = new XmlDocument();
+		private string initialSettings = "";
 
         public MainWindow()
         {
@@ -45,6 +46,7 @@ namespace PTPGestures
 			{
 				GestureList.Items.Add(gesture.InnerText);
 			}
+			AboutText.Text = "PTPGestures version " + version;
             //this.Visibility = Visibility.Hidden;
         }
 
@@ -75,6 +77,8 @@ namespace PTPGestures
 
 		private void GestureList_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
+			programmaticChanges = true;
+			SaveGestureButton.IsEnabled = false;
 			GestureName.Text = "";
 			GestureTrigger.Text = "";
 			KeyboardRadio.IsChecked = false;
@@ -96,6 +100,8 @@ namespace PTPGestures
 
 			if (e.AddedItems.Count > 0)
 			{
+				GestureSettingsBox.IsEnabled = true;
+				DeleteGestureButton.IsEnabled = true;
 				XmlNode gesture = Settings.SelectSingleNode("//gesture[name='" + e.AddedItems[0].ToString() + "']");
 				if (gesture != null)
 				{
@@ -186,6 +192,12 @@ namespace PTPGestures
 					}
 				}
 			}
+			else
+			{
+				GestureSettingsBox.IsEnabled = false;
+				DeleteGestureButton.IsEnabled = false;
+			}
+			programmaticChanges = false;
 		}
 
 		private void ActionRadio_Unchecked(object sender, RoutedEventArgs e)
@@ -218,6 +230,9 @@ namespace PTPGestures
 					ProgramActionGroup.IsEnabled = true;
 					break;
 			}
+
+			if(!programmaticChanges)
+			CheckChangedGesture();
 		}
 
 		private void CreateNewGesture(object sender, RoutedEventArgs e)
@@ -254,6 +269,11 @@ namespace PTPGestures
 		{
 			string oldName = GestureList.SelectedItem as string;
 			XmlNode modifiedNode = Settings.SelectSingleNode("//gesture[name='" + oldName + "']");
+			if (modifiedNode == null)
+			{
+				modifiedNode = Settings.CreateElement("gesture");
+				Settings.SelectSingleNode("//gesturelist").AppendChild(modifiedNode);
+			}
 			if (modifiedNode != null)
 			{
 				string gestureXml = "";
@@ -317,8 +337,16 @@ namespace PTPGestures
 				Console.WriteLine(gestureXml);
 				modifiedNode.InnerXml = gestureXml;
 				int index = GestureList.SelectedIndex;
-				GestureList.Items[index] = GestureName.Text;
-				GestureList.SelectedIndex = index;
+				if (index == -1)
+				{
+					GestureList.Items.Add(GestureName.Text);
+					GestureList.SelectedIndex = GestureList.Items.Count-1;
+				}
+				else
+				{
+					GestureList.Items[index] = GestureName.Text;
+					GestureList.SelectedIndex = index;
+				}
 
 				WriteSettings();
 				
@@ -334,6 +362,96 @@ namespace PTPGestures
 				initialSettings = Settings.InnerXml;
 			}
 			GestureParser.UpdateSettings();
+		}
+
+		private void GestureChanged(object sender, TextChangedEventArgs e)
+		{
+			if(!programmaticChanges)
+				CheckChangedGesture();
+		}
+
+		private void GestureChanged(object sender, RoutedEventArgs e)
+		{
+			if(!programmaticChanges)
+				CheckChangedGesture();
+		}
+
+		private void CheckChangedGesture()
+		{
+			XmlNode gesture = Settings.SelectSingleNode("//gesture[name='" + GestureList.SelectedItem + "']");
+			SaveGestureButton.IsEnabled = false;
+			if (gesture != null)
+			{
+				if (!gesture["name"].InnerText.Equals(GestureName.Text) ||
+					!gesture["trigger"].InnerText.Equals(GestureTrigger.Text))
+				{
+					SaveGestureButton.IsEnabled = true;
+					Console.WriteLine("name or trigger differs");
+					return;
+				}
+				switch (gesture["action"].Attributes["type"].Value)
+				{
+					case "keyboard":
+						if (KeyboardRadio.IsChecked != true)
+							SaveGestureButton.IsEnabled = true;
+						else
+						{
+							string action = gesture["action"].InnerText;
+							if ((KeyboardAlt.IsChecked == true && !action.Contains("!")) ||
+								(KeyboardAlt.IsChecked == false && action.Contains("!")) ||
+								(KeyboardCtrl.IsChecked == true && !action.Contains("^")) ||
+								(KeyboardCtrl.IsChecked == false && action.Contains("^")) ||
+								(KeyboardShift.IsChecked == true && !action.Contains("+")) ||
+								(KeyboardShift.IsChecked == false && action.Contains("+")) ||
+								(KeyboardWin.IsChecked == true && !action.Contains("#")) ||
+								(KeyboardWin.IsChecked == false && action.Contains("#")))
+								SaveGestureButton.IsEnabled = true;
+							else if (!action.Substring(action.LastIndexOfAny(new[] { '^', '!', '#', '+' }) + 1).Equals(KeyboardAction.Text))
+								SaveGestureButton.IsEnabled = true;
+							Console.WriteLine("Expect: " + KeyboardAction.Text + "\nActual: " + action.Substring(action.LastIndexOfAny(new[] { '^', '!', '#', '+' }) + 1));
+						}
+						break;
+					case "mouse":
+						if (MouseRadio.IsChecked != true)
+							SaveGestureButton.IsEnabled = true;
+						else
+						{
+							string action = gesture["action"].InnerText;
+							if ((MouseAlt.IsChecked == true && !action.Contains("!")) ||
+								(MouseAlt.IsChecked == false && action.Contains("!")) ||
+								(MouseCtrl.IsChecked == true && !action.Contains("^")) ||
+								(MouseCtrl.IsChecked == false && action.Contains("^")) ||
+								(MouseShift.IsChecked == true && !action.Contains("+")) ||
+								(MouseShift.IsChecked == false && action.Contains("+")) ||
+								(MouseWin.IsChecked == true && !action.Contains("#")) ||
+								(MouseWin.IsChecked == false && action.Contains("#")))
+								SaveGestureButton.IsEnabled = true;
+							else switch (action.Substring(action.IndexOfAny(new[] { 'L', 'M', 'R' })))
+							{
+								case "LButton":
+									if (MouseLeftRadio.IsChecked == false)
+										SaveGestureButton.IsEnabled = true;
+									break;
+								case "RButton":
+									if (MouseRightRadio.IsChecked == false)
+										SaveGestureButton.IsEnabled = true;
+									break;
+								case "MButton":
+									if (MouseMiddleRadio.IsChecked == false)
+										SaveGestureButton.IsEnabled = true;
+									break;
+								default: break;
+							}
+						}
+						break;
+					case "exec":
+						if (ProgramRadio.IsChecked != true)
+							SaveGestureButton.IsEnabled = true;
+						else if (!gesture["action"].InnerText.Equals(ProgramTextbox.Text))
+							SaveGestureButton.IsEnabled = true;
+						break;
+				}
+			}
 		}
     }
 }
