@@ -115,12 +115,16 @@ namespace PTPGestures
 						keys.Push(WindowsInput.Native.VirtualKeyCode.MENU);
 						break;
 					case '{':
-						int endpoint = action.Substring(keyPos).IndexOf('}');
-						string keyName = action.Substring(keyPos + 1, action.Length - (endpoint - keyPos));
+						int endpoint = action.Substring(keyPos).IndexOf('}')+keyPos-1;
+						string keyName = action.Substring(keyPos + 1, (endpoint - keyPos));
 						keyPos = endpoint + 1;
 						WindowsInput.Native.VirtualKeyCode key;
+						Console.WriteLine("action:" + action);
+						Console.WriteLine("keyPos: " + keyPos + ", endpoint: " + endpoint + ", length:" + action.Length);
+						Console.WriteLine("Specific keyname: " + keyName);
 						if (System.Enum.TryParse<WindowsInput.Native.VirtualKeyCode>(keyName, true, out key))
 						{
+							Console.WriteLine("Found " + keyName);
 							iSim.Keyboard.KeyDown(key);
 							keys.Push(key);
 						}

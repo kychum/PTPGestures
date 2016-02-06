@@ -73,32 +73,49 @@ namespace PTPGestures
 			else
 			{
 				List<TouchData> dataList = new List<TouchData>();
-				dataList.Add(new TouchData(RawInputAPI.GetRawHIDDataFromInput(inputData)));
-				for(int ctr = 1; ctr < dataList[0].ContactCount; ctr++){
-					insize = RawInputAPI.GetRawInputData(lParam, RawInputAPI.RawInputCommand.Input, out inputData, ref size, Marshal.SizeOf(typeof(RawInputAPI.RawInputHeader)));
-					if (insize == -1)
+				TouchData tmp = new TouchData(RawInputAPI.GetRawHIDDataFromInput(inputData));
+				if (tmp.Confidence)
+				{
+					dataList.Add(tmp);
+					// Console.WriteLine(dataList[0].ToString());
+					for (int ctr = 1; ctr < dataList[0].ContactCount; ctr++)
 					{
-						Console.Write("[Touchpad] Error retrieving RawInput");
-						Console.WriteLine((new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error())).Message);
+						insize = RawInputAPI.GetRawInputData(lParam, RawInputAPI.RawInputCommand.Input, out inputData, ref size, Marshal.SizeOf(typeof(RawInputAPI.RawInputHeader)));
+						if (insize == -1)
+						{
+							Console.Write("[Touchpad] Error retrieving RawInput: ");
+							Console.WriteLine((new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error())).Message);
+						}
+						TouchData data = new TouchData(RawInputAPI.GetRawHIDDataFromInput(inputData));
+						//Console.WriteLine(data.ToString());
+						if (dataList.Count(d => d.ContactID == data.ContactID) == 0)
+						{
+							if (data.Confidence)
+								dataList.Add(data);
+						}
 					}
-					TouchData data = new TouchData(RawInputAPI.GetRawHIDDataFromInput(inputData));
-					if (dataList.Count(d => d.ContactID == data.ContactID) == 0)
+
+					if ((!dataList[0].Tip) || (skip <= 0))
 					{
-						dataList.Add(data);
+						skip = skipAmt;
+						foreach (TouchData d in dataList)
+						{
+							//Console.WriteLine(d.ToString());
+							gp.AddPoint(d.ContactID, new System.Windows.Point(d.X, d.Y));
+							if (!d.Tip)
+							{
+								gp.ProcessGesture(d.ContactID);
+								skip = 1;
+							}
+						}
 					}
 				}
-				if ((!dataList[0].Tip) || (skip <= 0))
+				else
 				{
-					skip = skipAmt;
-					foreach (TouchData d in dataList)
+					// Toss other contacts if we can't tell if this is a purposeful touch
+					for (int i = 0; i < tmp.ContactCount; i++)
 					{
-						//Console.WriteLine(d.ToString());
-						gp.AddPoint(d.ContactID, new System.Windows.Point(d.X, d.Y));
-						if (!d.Tip)
-						{
-							gp.ProcessGesture(d.ContactID);
-							skip = 1;
-						}
+						RawInputAPI.GetRawInputData(lParam, RawInputAPI.RawInputCommand.Input, out inputData, ref size, Marshal.SizeOf(typeof(RawInputAPI.RawInputHeader)));
 					}
 				}
 

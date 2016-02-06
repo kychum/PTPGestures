@@ -15,6 +15,8 @@ namespace PTPGestures
 		public DateTime startTime;
 		private const double threshold = 20;
 		private const int tapTicks = 7500000;
+		private int height = 0x23b;
+		private int width = 0x41b;
 		private string gesture;
 		private Point lastPoint;
 
@@ -25,10 +27,19 @@ namespace PTPGestures
 			startY = y;
 			lastPoint = new Point(x, y);
 
-			if (x == 0 || y == 0 || x==0x41b || y==0x23b) {
+			if (x == 0){
+				gesture = "LE";
+			}
+			else if (y == 0){
+				gesture = "TE";
+			}
+			else if (x == width){
+				gesture = "RE";
+			}
+			else if (y == height) {
 				// Indicates gesture starts from edge of touchpad.
 				// Techinically this means that you could activate edge swipes from a different edge...
-				gesture = "E";
+				gesture = "BE";
 			}
 			else {
 				gesture = "";
